@@ -1,0 +1,6 @@
+.env
+.env.old
+env
+frontend/.env
+__pycache__/
+*.log
