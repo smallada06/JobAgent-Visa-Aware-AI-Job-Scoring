@@ -25,7 +25,6 @@ from agent import (
 
 
 app = FastAPI(title="Job Fit Agent API")
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -117,12 +116,12 @@ def _run_batch(batch_id: str, keywords: str, location: str, send_sms: bool):
         )
 
 
-@app.get("/health")
+@app.get("/api/health")
 def health():
     return {"status": "ok"}
 
 
-@app.get("/resume")
+@app.get("/api/resume")
 def resume_status():
     try:
         resume = get_resume()
@@ -146,7 +145,7 @@ def resume_status():
     }
 
 
-@app.post("/resume/upload")
+@app.post("/api/resume/upload")
 async def upload_resume(request: Request):
     body = await request.body()
     if not body:
@@ -175,7 +174,7 @@ async def upload_resume(request: Request):
         raise HTTPException(status_code=500, detail=str(exc))
 
 
-@app.post("/jobs/score")
+@app.post("/api/jobs/score")
 def score_new_job(req: JobRequest):
     try:
         result = process_job(req.url, send_notification_flag=req.send_sms)
@@ -184,7 +183,7 @@ def score_new_job(req: JobRequest):
         raise HTTPException(status_code=500, detail=str(exc))
 
 
-@app.post("/jobs/search-score")
+@app.post("/api/jobs/search-score")
 def start_search_score(req: BatchRequest):
     global latest_batch_id
     if not req.keywords.strip():
@@ -218,7 +217,7 @@ def start_search_score(req: BatchRequest):
     return _set_batch_state(batch_id, status="running", message="Finding LinkedIn jobs...")
 
 
-@app.get("/jobs/batch-status")
+@app.get("/api/jobs/batch-status")
 def get_batch_status(batch_id: str = None):
     lookup_id = batch_id or latest_batch_id
     if not lookup_id:
@@ -230,7 +229,7 @@ def get_batch_status(batch_id: str = None):
     return state
 
 
-@app.get("/jobs")
+@app.get("/api/jobs")
 def list_jobs(status: str = None, min_score: int = 0):
     filters = f"overall_score=gte.{min_score}&order=scored_at.desc"
     if status:
@@ -239,7 +238,7 @@ def list_jobs(status: str = None, min_score: int = 0):
     return [_json_lists(job) for job in jobs]
 
 
-@app.get("/jobs/{job_id}")
+@app.get("/api/jobs/{job_id}")
 def get_job(job_id: int):
     jobs = db_select("jobs", f"id=eq.{job_id}")
     if not jobs:
@@ -247,13 +246,13 @@ def get_job(job_id: int):
     return _json_lists(jobs[0])
 
 
-@app.patch("/jobs/{job_id}/status")
+@app.patch("/api/jobs/{job_id}/status")
 def update_status(job_id: int, body: StatusUpdate):
     db_update("jobs", job_id, {"status": body.status})
     return {"ok": True}
 
 
-@app.get("/stats")
+@app.get("/api/stats")
 def get_stats():
     all_jobs = db_select("jobs", "order=scored_at.desc")
     if not all_jobs:
