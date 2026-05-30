@@ -53,10 +53,15 @@ function formatDate(value) {
 
 async function getErrorMessage(response) {
   try {
-    const data = await response.json();
+    const cloned = response.clone();
+    const data = await cloned.json();
     return data.detail || data.message || JSON.stringify(data);
   } catch {
-    return response.text();
+    try {
+      return await response.text();
+    } catch {
+      return response.statusText || `HTTP ${response.status}`;
+    }
   }
 }
 
