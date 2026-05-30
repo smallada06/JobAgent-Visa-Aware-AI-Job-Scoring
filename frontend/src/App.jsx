@@ -53,10 +53,15 @@ function formatDate(value) {
 
 async function getErrorMessage(response) {
   try {
-    const data = await response.json();
-    return data.detail || data.message || JSON.stringify(data);
+    const text = await response.text();
+    try {
+      const data = JSON.parse(text);
+      return data.detail || data.message || JSON.stringify(data);
+    } catch {
+      return text;
+    }
   } catch {
-    return response.text();
+    return "Unknown error occurred";
   }
 }
 
